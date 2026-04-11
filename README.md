@@ -2,10 +2,19 @@
   <img src="https://docs.hlquery.com/img/hlquery/2.png" alt="hlquery logo" width="200">
 </div>
 
+<div align="center">
 
-# hlquery Rust API Client
+**A modern, async Rust client library for hlquery.**
 
-A modern, async Rust client library for hlquery, designed with a familiar and intuitive API structure.
+[![Twitter Follow](https://img.shields.io/twitter/url/https/x.com/hlquery.svg?style=social&label=Follow%20%40hlquery)](https://x.com/hlquery)
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/hlquery/rust-api)](https://github.com/hlquery/rust-api/pulse)
+[![GitHub stars](https://img.shields.io/github/stars/hlquery/rust-api?style=social)](https://github.com/hlquery/rust-api/stargazers)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+[Documentation](https://docs.hlquery.com) • [hlquery](https://github.com/hlquery/hlquery) • [Discord](https://discord.hlquery.com)
+
+</div>
+
 
 ## Features
 
@@ -85,6 +94,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Method 3: Use X-API-Key
     client.set_auth_token("your_key_here".to_string(), "api-key".to_string());
     
+    Ok(())
+}
+```
+
+### Reduce Text Example
+
+If the `ai_search` module is enabled, you can use the raw request helper to summarize a stored document:
+
+```rust
+use hlquery_rust_client::Client;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new("http://localhost:9200", None)?;
+
+    let mut query = HashMap::new();
+    query.insert("q".to_string(), "summarize onboarding guide in docs".to_string());
+    query.insert("run".to_string(), "true".to_string());
+
+    let summary = client
+        .execute_request("GET", "/modules/ai_search/talk", None, Some(query))
+        .await?;
+
+    println!("{}", summary.get_body());
     Ok(())
 }
 ```
