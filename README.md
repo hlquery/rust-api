@@ -100,7 +100,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Reduce Text Example
 
-If the `ai_search` module is enabled, you can use the raw request helper to summarize a stored document:
+You can use the raw request helper to call custom module routes directly:
 
 ```rust
 use hlquery_rust_client::Client;
@@ -111,14 +111,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new("http://localhost:9200", None)?;
 
     let mut query = HashMap::new();
-    query.insert("q".to_string(), "summarize onboarding guide in docs".to_string());
-    query.insert("run".to_string(), "true".to_string());
+    query.insert("q".to_string(), "example query".to_string());
 
-    let summary = client
-        .execute_request("GET", "/modules/ai_search/talk", None, Some(query))
+    let module_response = client
+        .execute_request("GET", "/modules/<name>/<route>", None, Some(query))
         .await?;
 
-    println!("{}", summary.get_body());
+    println!("{}", module_response.get_body());
     Ok(())
 }
 ```
