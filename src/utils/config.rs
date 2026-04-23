@@ -7,6 +7,7 @@
  */
 
 use std::collections::HashMap;
+use std::env;
 use url::Url;
 
 /// Configuration options for the client
@@ -21,7 +22,9 @@ pub struct ConfigOptions {
 impl Default for ConfigOptions {
     fn default() -> Self {
         ConfigOptions {
-            base_url: "http://localhost:9200".to_string(),
+            base_url: env::var("HLQ_BASE_URL")
+                .or_else(|_| env::var("HLQUERY_BASE_URL"))
+                .unwrap_or_else(|_| "http://localhost:9200".to_string()),
             timeout: 30000,
             token: None,
             auth_method: "bearer".to_string(),

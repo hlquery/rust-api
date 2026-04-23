@@ -69,7 +69,9 @@ async fn get_first_collection(client: &Client) -> Option<String> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let base_url = "http://localhost:9200";
+    let base_url = env::var("HLQ_BASE_URL")
+        .or_else(|_| env::var("HLQUERY_BASE_URL"))
+        .unwrap_or_else(|_| "http://localhost:9200".to_string());
     
     // Parse command line arguments
     let mut args: Vec<String> = env::args().skip(1).collect();

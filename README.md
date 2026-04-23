@@ -54,7 +54,10 @@ use hlquery_rust_client::Client;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize client
-    let client = Client::new("http://localhost:9200", None)?;
+    let base_url = std::env::var("HLQ_BASE_URL")
+        .or_else(|_| std::env::var("HLQUERY_BASE_URL"))
+        .unwrap_or_else(|_| "http://localhost:9200".to_string());
+    let client = Client::new(&base_url, None)?;
     
     // Health check
     let health = client.health().await?;
