@@ -7,7 +7,11 @@ const DEFAULT_WEIGHTS: &[(&str, f64)] = &[
     ("hit_log_sqrt", 0.15),
 ];
 
-pub fn compute_rank_signal(popularity: f64, hit_log: f64, overrides: Option<HashMap<String, f64>>) -> f64 {
+pub fn compute_rank_signal(
+    popularity: f64,
+    hit_log: f64,
+    overrides: Option<HashMap<String, f64>>,
+) -> f64 {
     let mut weights: HashMap<String, f64> = HashMap::new();
 
     for (key, value) in DEFAULT_WEIGHTS {

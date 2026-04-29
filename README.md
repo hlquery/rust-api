@@ -13,14 +13,13 @@
 
 </div>
 
-# hlquery Rust API Client
-
 
 ## Features
 
 -  **Async/Await Support**: Built on Tokio for modern async Rust
 -  **Type-safe**: Strong typing throughout with serde for JSON handling
 -  **Intuitive API**: Familiar and easy-to-use structure
+-  **Nested API Objects**: `client.collections()`, `client.search_api()`, `client.sql_api()`
 -  **Authentication Support**: Bearer token and X-API-Key authentication
 -  **Comprehensive Validation**: Input validation for all operations
 -  **Error Handling**: Rich error types with thiserror
@@ -121,6 +120,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     println!("{}", module_response.get_body());
+    Ok(())
+}
+```
+
+### SQL Example
+
+Use the dedicated SQL helpers for both top-level SQL and collection-bound SQL `SELECT` queries:
+
+```rust
+use hlquery_rust_client::Client;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new("http://localhost:9200", None)?;
+    let sql_api = client.sql_api();
+
+    // Top-level SQL through /sql
+    let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
+    println!("SHOW COLLECTIONS: {}", rows.get_body());
+
+    // Collection-bound SQL SELECT through /collections/{name}/documents/search
+    let mut params = HashMap::new();
+    params.insert("highlight".to_string(), "false".to_string());
+
+    let products = sql_api
+        .search(
+            "products",
+            "SELECT id, title, price FROM products WHERE price > 100 ORDER BY price DESC LIMIT 3;",
+            Some(params),
+        )
+        .await?;
+
+    println!("Products SQL results: {}", products.get_body());
     Ok(())
 }
 ```
@@ -298,6 +331,44 @@ let searches = vec![
     })
 ];
 let results = client.search_api().multi_search(searches).await?;
+
+// Collection-bound SQL SELECT through the nested search handler
+let mut sql_params = HashMap::new();
+sql_params.insert("highlight".to_string(), "false".to_string());
+let results = client
+    .search_api()
+    .sql(
+        "collection",
+        "SELECT id, title FROM collection ORDER BY title ASC LIMIT 3;",
+        Some(sql_params)
+    )
+    .await?;
+```
+
+### SQL APIs
+
+```rust
+use std::collections::HashMap;
+
+// Top-level SQL through /sql
+let rows = client.sql("SHOW COLLECTIONS;", None).await?;
+let exec_result = client.exec_sql("DROP logs_archive;").await?;
+
+// Nested SQL API object
+let sql_api = client.sql_api();
+let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
+let exec_result = sql_api.exec("DROP logs_archive;").await?;
+
+// Collection-bound SQL SELECT
+let mut params = HashMap::new();
+params.insert("highlight".to_string(), "false".to_string());
+let results = client
+    .sql_search(
+        "products",
+        "SELECT id, title FROM products ORDER BY title ASC LIMIT 3;",
+        Some(params)
+    )
+    .await?;
 ```
 
 ### Ranking helpers
@@ -408,6 +479,9 @@ cargo run --example documents
 
 # Search examples
 cargo run --example search
+
+# SQL examples
+cargo run --example sql
 ```
 
 ### With Authentication Token

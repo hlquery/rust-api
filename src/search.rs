@@ -1,11 +1,10 @@
 /**
  * hlquery Rust Client - Search API
- * 
+ *
  * Copyright (C) 2021-2026, Carlos F. Ferry <carlos.ferry@gmail.com>
- * 
+ *
  * This file is part of hlquery, released under the BSD License version 3.
  */
-
 use crate::error::Result;
 use crate::request::Request;
 use crate::response::Response;
@@ -24,31 +23,69 @@ impl Search {
     pub fn new(request: Arc<Request>) -> Self {
         Search { request }
     }
-    
+
     /// Perform search
-    pub async fn search(&self, collection_name: &str, params: HashMap<String, String>) -> Result<Response> {
+    pub async fn search(
+        &self,
+        collection_name: &str,
+        params: HashMap<String, String>,
+    ) -> Result<Response> {
         Validator::validate_collection_name(collection_name)?;
-        
+
         // Convert params to JSON for validation
-        let params_json: Value = serde_json::to_value(&params)
-            .map_err(|e| crate::error::HlqueryError::JsonError(e))?;
+        let params_json: Value =
+            serde_json::to_value(&params).map_err(|e| crate::error::HlqueryError::JsonError(e))?;
         Validator::validate_search_params(&params_json)?;
-        
-        let path = format!("/collections/{}/documents/search", urlencoding::encode(collection_name));
+
+        let path = format!(
+            "/collections/{}/documents/search",
+            urlencoding::encode(collection_name)
+        );
         self.request.execute("GET", &path, None, Some(params)).await
     }
-    
+
     /// Perform vector search
-    pub async fn vector_search(&self, collection_name: &str, params: HashMap<String, String>) -> Result<Response> {
+    pub async fn vector_search(
+        &self,
+        collection_name: &str,
+        params: HashMap<String, String>,
+    ) -> Result<Response> {
         Validator::validate_collection_name(collection_name)?;
-        
-        let path = format!("/collections/{}/vector_search", urlencoding::encode(collection_name));
+
+        let path = format!(
+            "/collections/{}/vector_search",
+            urlencoding::encode(collection_name)
+        );
         self.request.execute("GET", &path, None, Some(params)).await
     }
-    
+
     /// Perform multi-search
     pub async fn multi_search(&self, searches: Vec<Value>) -> Result<Response> {
         let body = serde_json::json!({ "searches": searches });
-        self.request.execute("POST", "/multi_search", Some(body), None).await
+        self.request
+            .execute("POST", "/multi_search", Some(body), None)
+            .await
+    }
+
+    /// Execute a collection-bound SQL SELECT through the search endpoint
+    pub async fn sql(
+        &self,
+        collection_name: &str,
+        sql: &str,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        Validator::validate_collection_name(collection_name)?;
+        Validator::validate_sql(sql)?;
+
+        let mut query_params = params.unwrap_or_default();
+        query_params.insert("sql".to_string(), sql.to_string());
+
+        let path = format!(
+            "/collections/{}/documents/search",
+            urlencoding::encode(collection_name)
+        );
+        self.request
+            .execute("GET", &path, None, Some(query_params))
+            .await
     }
 }

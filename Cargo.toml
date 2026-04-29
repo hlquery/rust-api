@@ -39,3 +39,7 @@ path = "examples/documents.rs"
 [[example]]
 name = "search"
 path = "examples/search.rs"
+
+[[example]]
+name = "sql"
+path = "examples/sql.rs"
