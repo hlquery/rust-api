@@ -59,3 +59,82 @@ impl Sql {
         self.search.sql(collection_name, sql, params).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Sql;
+    use crate::request::Request;
+    use crate::search::Search;
+    use std::sync::Arc;
+
+    #[test]
+    fn creates_sql_handler() {
+        let request = Arc::new(
+            Request::new(
+                "http://localhost:9200".to_string(),
+                1000,
+                None,
+                "bearer".to_string(),
+            )
+            .expect("request should be created"),
+        );
+        let search = Arc::new(Search::new(Arc::clone(&request)));
+        let _sql = Sql::new(request, search);
+    }
+
+    #[tokio::test]
+    async fn rejects_blank_top_level_sql_query() {
+        let request = Arc::new(
+            Request::new(
+                "http://localhost:9200".to_string(),
+                1000,
+                None,
+                "bearer".to_string(),
+            )
+            .expect("request should be created"),
+        );
+        let search = Arc::new(Search::new(Arc::clone(&request)));
+        let sql = Sql::new(request, search);
+
+        let error = sql
+            .query("   ", None)
+            .await
+            .expect_err("blank SQL query should fail validation");
+
+        assert!(
+            error
+                .to_string()
+                .contains("SQL query must be a non-empty string"),
+            "unexpected error: {}",
+            error
+        );
+    }
+
+    #[tokio::test]
+    async fn rejects_blank_top_level_sql_exec() {
+        let request = Arc::new(
+            Request::new(
+                "http://localhost:9200".to_string(),
+                1000,
+                None,
+                "bearer".to_string(),
+            )
+            .expect("request should be created"),
+        );
+        let search = Arc::new(Search::new(Arc::clone(&request)));
+        let sql = Sql::new(request, search);
+
+        let error = sql
+            .exec("   ")
+            .await
+            .expect_err("blank SQL exec should fail validation");
+
+        assert!(
+            error
+                .to_string()
+                .contains("SQL query must be a non-empty string"),
+            "unexpected error: {}",
+            error
+        );
+    }
+}

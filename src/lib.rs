@@ -12,6 +12,7 @@ pub mod error;
 pub mod ranker;
 pub mod request;
 pub mod response;
+pub mod sam;
 pub mod search;
 pub mod sql;
 pub mod utils;
@@ -23,6 +24,7 @@ pub use documents::Documents;
 pub use error::{HlqueryError, Result};
 pub use request::Request;
 pub use response::Response;
+pub use sam::Sam;
 pub use search::Search;
 pub use sql::Sql;
 

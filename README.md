@@ -9,6 +9,7 @@
 [![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/hlquery/rust-api)](https://github.com/hlquery/rust-api/pulse)
 [![rust-api](https://img.shields.io/badge/GitHub-rust--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/rust-api/stargazers)
+[![hlquery](https://img.shields.io/badge/hlquery-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 </div>
@@ -19,7 +20,7 @@
 -  **Async/Await Support**: Built on Tokio for modern async Rust
 -  **Type-safe**: Strong typing throughout with serde for JSON handling
 -  **Intuitive API**: Familiar and easy-to-use structure
--  **Nested API Objects**: `client.collections()`, `client.search_api()`, `client.sql_api()`
+-  **Nested API Objects**: `client.collections()`, `client.search_api()`, `client.sql_api()`, `client.sam()`
 -  **Authentication Support**: Bearer token and X-API-Key authentication
 -  **Comprehensive Validation**: Input validation for all operations
 -  **Error Handling**: Rich error types with thiserror
@@ -158,6 +159,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### SAM Example
+
+Use the dedicated SAM helper to search against generated SAM terms and inspect status/history:
+
+```rust
+use hlquery_rust_client::Client;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>>
+{
+    let client = Client::new("http://localhost:9200", None)?;
+    let sam = client.sam();
+
+    let status = sam.status(Some("music"), None).await?;
+    println!("SAM status: {}", status.get_body());
+
+    let mut params = HashMap::new();
+    params.insert("limit".to_string(), "5".to_string());
+
+    let results = sam.search("music", "queen of pop", Some(params)).await?;
+    println!("SAM results: {}", results.get_body());
+
+    let history = sam.history(Some("music"), 5, None).await?;
+    println!("SAM history: {}", history.get_body());
+
+    Ok(())
+}
+```
+
 ## API Reference
 
 ### Client Initialization
@@ -217,6 +248,12 @@ let result = collections_api.create("new_collection", schema).await?;
 
 // Update collection schema
 let result = collections_api.update("collection_name", schema).await?;
+
+// Using the SAM API handler
+let sam_api = client.sam();
+let results = sam_api.search("music", "queen of pop", None).await?;
+let status = sam_api.status(Some("music"), None).await?;
+let history = sam_api.history(Some("music"), 10, None).await?;
 
 // Delete collection
 let result = collections_api.delete("collection_name").await?;
@@ -479,6 +516,9 @@ cargo run --example documents
 
 # Search examples
 cargo run --example search
+
+# SAM examples
+cargo run --example sam
 
 # SQL examples
 cargo run --example sql
