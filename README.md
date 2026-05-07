@@ -109,16 +109,21 @@ let results = sam.search("music", "queen of pop", Some(params)).await?;
 
 ```rust
 let client = Client::new("http://localhost:9200", None)?;
-let sql_api = client.sql_api();
 
-let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
-let products = sql_api
-    .search(
+let rows = client.sql("SHOW COLLECTIONS;", None).await?;
+let exec_result = client
+    .exec_sql("INSERT INTO logs_archive (id, title) VALUES ('row-1', 'warm cache');")
+    .await?;
+let products = client
+    .sql_search(
         "products",
-        "SELECT id, title, price FROM products ORDER BY price DESC LIMIT 3;",
+        "SELECT id, title, price FROM products WHERE price > 100 ORDER BY price DESC LIMIT 3;",
         None,
     )
     .await?;
+
+let sql_api = client.sql_api();
+let same_rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
 ```
 
 ### Reduce Text Example

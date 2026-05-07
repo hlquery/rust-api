@@ -301,6 +301,7 @@ impl Client {
 mod tests {
     use super::Client;
     use std::collections::HashMap;
+    use tokio::runtime::Runtime;
 
     #[test]
     fn uses_base_url_argument_over_default_localhost() {
@@ -325,5 +326,59 @@ mod tests {
 
         let client = Client::new("   ", Some(options)).expect("client should be created");
         assert_eq!(client.request.base_url(), "http://127.0.0.1:9500");
+    }
+
+    #[test]
+    fn rejects_blank_top_level_sql_via_client_helper() {
+        let runtime = Runtime::new().expect("tokio runtime should be created");
+        let client = Client::new("http://localhost:9200", None).expect("client should be created");
+
+        let error = runtime
+            .block_on(client.sql("   ", None))
+            .expect_err("blank SQL query should fail validation");
+
+        assert!(
+            error
+                .to_string()
+                .contains("SQL query must be a non-empty string"),
+            "unexpected error: {}",
+            error
+        );
+    }
+
+    #[test]
+    fn rejects_blank_sql_exec_via_client_helper() {
+        let runtime = Runtime::new().expect("tokio runtime should be created");
+        let client = Client::new("http://localhost:9200", None).expect("client should be created");
+
+        let error = runtime
+            .block_on(client.exec_sql("   "))
+            .expect_err("blank SQL exec should fail validation");
+
+        assert!(
+            error
+                .to_string()
+                .contains("SQL query must be a non-empty string"),
+            "unexpected error: {}",
+            error
+        );
+    }
+
+    #[test]
+    fn rejects_blank_collection_sql_via_client_helper() {
+        let runtime = Runtime::new().expect("tokio runtime should be created");
+        let client = Client::new("http://localhost:9200", None).expect("client should be created");
+
+        let error = runtime
+            .block_on(client.sql_search("products", "   ", None))
+            .expect_err("blank collection SQL should fail validation");
+
+        assert!(
+            error
+                .to_string()
+                .contains("SQL query must be a non-empty string"),
+            "unexpected error: {}",
+            error
+        );
     }
 }
