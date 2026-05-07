@@ -4,31 +4,36 @@
 
 <div align="center">
 
-**A modern, async Rust client library for hlquery.**
+**A modern async Rust client library for hlquery, designed with a familiar and intuitive API structure.**
 
 [![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/hlquery/rust-api)](https://github.com/hlquery/rust-api/pulse)
-[![rust-api](https://img.shields.io/badge/GitHub-rust--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/rust-api/stargazers)
-[![hlquery](https://img.shields.io/badge/hlquery-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
+[![GitHub](https://img.shields.io/badge/GitHub-rust--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/rust-api/stargazers)
+[![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 </div>
 
+### What is the hlquery Rust API?
 
-## Features
+The hlquery Rust API is the official Rust client for hlquery. It wraps the server's HTTP interface in an async client with helpers for collections, documents, search, SQL, and SAM.
 
--  **Async/Await Support**: Built on Tokio for modern async Rust
--  **Type-safe**: Strong typing throughout with serde for JSON handling
--  **Intuitive API**: Familiar and easy-to-use structure
--  **Nested API Objects**: `client.collections()`, `client.search_api()`, `client.sql_api()`, `client.sam()`
--  **Authentication Support**: Bearer token and X-API-Key authentication
--  **Comprehensive Validation**: Input validation for all operations
--  **Error Handling**: Rich error types with thiserror
--  **No Runtime Dependencies**: Minimal dependencies, maximum performance
+It is intended for async services, tools, and applications that want strong typing and a small high-level integration layer over hlquery.
 
-## Installation
+### Why use it?
 
-Add this to your `Cargo.toml`:
+- Async-first design built for Tokio.
+- Strong typing and structured error handling.
+- Modular API objects for collections, search, SQL, and SAM.
+- Raw request helper for custom routes.
+
+### Why choose it over raw HTTP?
+
+Choose the Rust client over raw HTTP when you want less repetitive request building and JSON parsing, cleaner auth and timeout handling, and application-level search code that stays compact.
+
+### Install
+
+Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -36,7 +41,7 @@ hlquery-rust-client = { path = "../etc/api/rust" }
 tokio = { version = "1", features = ["full"] }
 ```
 
-Or if published to crates.io:
+If published:
 
 ```toml
 [dependencies]
@@ -44,534 +49,95 @@ hlquery-rust-client = "1.0"
 tokio = { version = "1", features = ["full"] }
 ```
 
-## Quick Start
-
-### Basic Usage
+### Quick Start
 
 ```rust
 use hlquery_rust_client::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize client
     let base_url = std::env::var("HLQ_BASE_URL")
         .or_else(|_| std::env::var("HLQUERY_BASE_URL"))
         .unwrap_or_else(|_| "http://localhost:9200".to_string());
+
     let client = Client::new(&base_url, None)?;
-    
-    // Health check
+
     let health = client.health().await?;
     println!("Status: {}", health.get_status_code());
-    
-    // List collections
+
     let collections = client.list_collections(0, 10).await?;
-    if collections.is_success() {
-        let body = collections.get_body();
-        if let Some(collections_array) = body.get("collections").and_then(|c| c.as_array()) {
-            println!("Found {} collections", collections_array.len());
-        }
-    }
-    
+    println!("{}", collections.get_body());
+
     Ok(())
 }
 ```
 
-### With Authentication
+### Auth
 
 ```rust
 use hlquery_rust_client::Client;
 use std::collections::HashMap;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Method 1: Set token in constructor
-    let mut options = HashMap::new();
-    options.insert("token".to_string(), "your_token_here".to_string());
-    options.insert("auth_method".to_string(), "bearer".to_string());
-    let client = Client::new("http://localhost:9200", Some(options))?;
-    
-    // Method 2: Set token dynamically
-    let client = Client::new("http://localhost:9200", None)?;
-    client.set_auth_token("your_token_here".to_string(), "bearer".to_string());
-    
-    // Method 3: Use X-API-Key
-    client.set_auth_token("your_key_here".to_string(), "api-key".to_string());
-    
-    Ok(())
-}
+let mut options = HashMap::new();
+options.insert("token".to_string(), "your_token_here".to_string());
+options.insert("auth_method".to_string(), "bearer".to_string());
+
+let client = Client::new("http://localhost:9200", Some(options))?;
+client.set_auth_token("your_api_key_here".to_string(), "api-key".to_string());
+```
+
+### SAM
+
+SAM is separate from vector search. It performs term and intent-style lookup, not vector similarity search.
+
+```rust
+use hlquery_rust_client::Client;
+use std::collections::HashMap;
+
+let client = Client::new("http://localhost:9200", None)?;
+let sam = client.sam();
+
+let status = sam.status(Some("music"), None).await?;
+let history = sam.history(Some("music"), 5, None).await?;
+
+let mut params = HashMap::new();
+params.insert("limit".to_string(), "5".to_string());
+let results = sam.search("music", "queen of pop", Some(params)).await?;
+```
+
+### SQL
+
+```rust
+let client = Client::new("http://localhost:9200", None)?;
+let sql_api = client.sql_api();
+
+let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
+let products = sql_api
+    .search(
+        "products",
+        "SELECT id, title, price FROM products ORDER BY price DESC LIMIT 3;",
+        None,
+    )
+    .await?;
 ```
 
 ### Reduce Text Example
 
-You can use the raw request helper to call custom module routes directly:
-
-```rust
-use hlquery_rust_client::Client;
-use std::collections::HashMap;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new("http://localhost:9200", None)?;
-
-    let mut query = HashMap::new();
-    query.insert("q".to_string(), "example query".to_string());
-
-    let module_response = client
-        .execute_request("GET", "/modules/<name>/<route>", None, Some(query))
-        .await?;
-
-    println!("{}", module_response.get_body());
-    Ok(())
-}
-```
-
-### SQL Example
-
-Use the dedicated SQL helpers for both top-level SQL and collection-bound SQL `SELECT` queries:
-
-```rust
-use hlquery_rust_client::Client;
-use std::collections::HashMap;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new("http://localhost:9200", None)?;
-    let sql_api = client.sql_api();
-
-    // Top-level SQL through /sql
-    let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
-    println!("SHOW COLLECTIONS: {}", rows.get_body());
-
-    // Collection-bound SQL SELECT through /collections/{name}/documents/search
-    let mut params = HashMap::new();
-    params.insert("highlight".to_string(), "false".to_string());
-
-    let products = sql_api
-        .search(
-            "products",
-            "SELECT id, title, price FROM products WHERE price > 100 ORDER BY price DESC LIMIT 3;",
-            Some(params),
-        )
-        .await?;
-
-    println!("Products SQL results: {}", products.get_body());
-    Ok(())
-}
-```
-
-### SAM Example
-
-Use the dedicated SAM helper to search against generated SAM terms and inspect status/history:
-
-```rust
-use hlquery_rust_client::Client;
-use std::collections::HashMap;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>>
-{
-    let client = Client::new("http://localhost:9200", None)?;
-    let sam = client.sam();
-
-    let status = sam.status(Some("music"), None).await?;
-    println!("SAM status: {}", status.get_body());
-
-    let mut params = HashMap::new();
-    params.insert("limit".to_string(), "5".to_string());
-
-    let results = sam.search("music", "queen of pop", Some(params)).await?;
-    println!("SAM results: {}", results.get_body());
-
-    let history = sam.history(Some("music"), 5, None).await?;
-    println!("SAM history: {}", history.get_body());
-
-    Ok(())
-}
-```
-
-## API Reference
-
-### Client Initialization
-
-```rust
-let client = Client::new(base_url, options)?;
-```
-
-**Parameters**:
-- `base_url` (string, required): Base URL of hlquery server (e.g., `"http://localhost:9200"`)
-- `options` (Option<HashMap<String, String>>, optional): Client options
-  - `"base_url"`: Legacy fallback URL (used only when `base_url` argument is blank)
-  - `"token"`: Authentication token
-  - `"auth_method"`: Authentication method (`"bearer"` or `"api-key"`)
-  - `"timeout"`: Request timeout in milliseconds (default: 30000)
-
-**URL precedence**:
-- `base_url` argument is canonical and overrides `options["base_url"]`
-- `options["base_url"]` is only used as a backward-compatible fallback when `base_url` is blank
-
-### System APIs
-
-```rust
-// Health check
-let health = client.health().await?;
-
-// Server statistics
-let stats = client.stats().await?;
-
-// Server information
-let info = client.info().await?;
-```
-
-### Collections API
-
-```rust
-// List collections
-let collections = client.list_collections(0, 10).await?;
-
-// Get collection details
-let collection = client.get_collection("my_collection").await?;
-
-// Get collection fields (formatted)
-let fields = client.get_collection_fields("my_collection").await?;
-
-// Using the collections API handler
-let collections_api = client.collections();
-
-// Create collection
-let schema = serde_json::json!({
-    "fields": [
-        { "name": "title", "type": "string" },
-        { "name": "content", "type": "string" }
-    ]
-});
-let result = collections_api.create("new_collection", schema).await?;
-
-// Update collection schema
-let result = collections_api.update("collection_name", schema).await?;
-
-// Using the SAM API handler
-let sam_api = client.sam();
-let results = sam_api.search("music", "queen of pop", None).await?;
-let status = sam_api.status(Some("music"), None).await?;
-let history = sam_api.history(Some("music"), 10, None).await?;
-
-// Delete collection
-let result = collections_api.delete("collection_name").await?;
-```
-
-### Documents API
-
-```rust
-// List documents
-use std::collections::HashMap;
-let mut params = HashMap::new();
-params.insert("offset".to_string(), "0".to_string());
-params.insert("limit".to_string(), "10".to_string());
-let docs = client.list_documents("collection", Some(params)).await?;
-
-// Get document by ID
-let doc = client.get_document("collection", "doc_id").await?;
-
-// Using the documents API handler
-let documents_api = client.documents();
-
-// Add document
-let new_doc = serde_json::json!({
-    "id": "doc_1",
-    "title": "New Document",
-    "content": "Document content"
-});
-let result = documents_api.add("collection", new_doc).await?;
-
-// Update document
-let updated_doc = serde_json::json!({
-    "title": "Updated Document"
-});
-let result = documents_api.update("collection", "doc_id", updated_doc).await?;
-
-// Delete document
-let result = documents_api.delete("collection", "doc_id").await?;
-
-// Bulk import
-let bulk_docs = vec![
-    serde_json::json!({ "id": "doc1", "title": "Doc 1" }),
-    serde_json::json!({ "id": "doc2", "title": "Doc 2" })
-];
-let result = documents_api.import("collection", bulk_docs).await?;
-
-// Delete by filter
-let result = documents_api.delete_by_filter("collection", "title:Bulk*").await?;
-```
-
-### Search API
+Use the raw request helper for custom module routes:
 
 ```rust
 use std::collections::HashMap;
 
-// Simple search
-let mut params = HashMap::new();
-params.insert("q".to_string(), "search query".to_string());
-params.insert("query_by".to_string(), "title,content".to_string());
-params.insert("limit".to_string(), "10".to_string());
-let results = client.search("collection", params).await?;
+let client = Client::new("http://localhost:9200", None)?;
+let mut query = HashMap::new();
+query.insert("q".to_string(), "example query".to_string());
 
-// Supported query syntax
-// Field-specific: params.insert("q".to_string(), "title:laptop".to_string());
-// Boolean OR: params.insert("q".to_string(), "title:laptop OR title:notebook".to_string());
-// Boolean NOT: params.insert("q".to_string(), "title:laptop NOT title:refurbished".to_string());
-// Phrase: params.insert("q".to_string(), "\"wireless keyboard\"".to_string());
-// Wildcard: params.insert("q".to_string(), "laptop*".to_string());
-
-// Search with filters
-let mut params = HashMap::new();
-params.insert("q".to_string(), "query".to_string());
-params.insert("query_by".to_string(), "title".to_string());
-params.insert("filter_by".to_string(), "category:electronics".to_string());
-params.insert("sort_by".to_string(), "price:asc".to_string());
-params.insert("limit".to_string(), "20".to_string());
-let results = client.search("collection", params).await?;
-
-// Vector search
-let mut params = HashMap::new();
-params.insert("vector_query".to_string(), "[0.1,0.2,0.3,0.4,0.5]".to_string());
-params.insert("limit".to_string(), "10".to_string());
-params.insert("threshold".to_string(), "0.5".to_string());
-let results = client.vector_search("collection", params).await?;
-
-// Advanced vector search (POST body with query params / distance controls)
-let body = serde_json::json!({
-    "vector": [0.1, 0.2, 0.3, 0.4, 0.5],
-    "field_name": "embedding",
-    "topk": 10,
-    "include_distance": true,
-    "query_params": { "ef": 64, "nprobe": 4, "is_linear": true },
-    "radius": 1.0
-});
-let results = client.execute_request(
-    "POST",
-    "/collections/collection/vector_search",
-    Some(body),
-    None
-).await?;
-
-// Multi-search
-let searches = vec![
-    serde_json::json!({
-        "collection": "col1",
-        "q": "query1",
-        "query_by": "title"
-    }),
-    serde_json::json!({
-        "collection": "col2",
-        "q": "query2",
-        "query_by": "content"
-    })
-];
-let results = client.search_api().multi_search(searches).await?;
-
-// Collection-bound SQL SELECT through the nested search handler
-let mut sql_params = HashMap::new();
-sql_params.insert("highlight".to_string(), "false".to_string());
-let results = client
-    .search_api()
-    .sql(
-        "collection",
-        "SELECT id, title FROM collection ORDER BY title ASC LIMIT 3;",
-        Some(sql_params)
-    )
+let module_response = client
+    .execute_request("GET", "/modules/<name>/<route>", None, Some(query))
     .await?;
 ```
 
-### SQL APIs
+### Notes
 
-```rust
-use std::collections::HashMap;
-
-// Top-level SQL through /sql
-let rows = client.sql("SHOW COLLECTIONS;", None).await?;
-let exec_result = client.exec_sql("DROP logs_archive;").await?;
-
-// Nested SQL API object
-let sql_api = client.sql_api();
-let rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
-let exec_result = sql_api.exec("DROP logs_archive;").await?;
-
-// Collection-bound SQL SELECT
-let mut params = HashMap::new();
-params.insert("highlight".to_string(), "false".to_string());
-let results = client
-    .sql_search(
-        "products",
-        "SELECT id, title FROM products ORDER BY title ASC LIMIT 3;",
-        Some(params)
-    )
-    .await?;
-```
-
-### Ranking helpers
-
-`hlquery::compute_rank_signal` and `hlquery::attach_rank_sort` are available from the root crate, so you can derive a `rank_signal` from popularity/hit inputs and sort by that field everywhere.
-
-```rust
-use hlquery::{compute_rank_signal, attach_rank_sort};
-use std::collections::HashMap;
-
-let mut params = HashMap::new();
-params.insert("q".to_string(), "guide".to_string());
-let signal = compute_rank_signal(popularity as f64, hit_log as f64, None);
-params.insert("rank_signal".to_string(), signal.to_string());
-attach_rank_sort(&mut params, "rank_signal", "desc");
-let results = client.search("collection", params).await?;
-```
-
-### Search Parameters
-
-The `search()` method accepts flexible parameters:
-
-#### Query String (`q`)
-The `q` parameter supports the current lexical query syntax:
-- **FIELD**: `"q" => "title:laptop"`
-- **NOT**: `"q" => "title:laptop NOT title:refurbished"` or `"q" => "NOT apple"`
-- **Boolean**: `"q" => "title:laptop OR title:notebook"`
-- **WILDCARD**: `"q" => "laptop*"`, `"q" => "*laptop"`, `"q" => "lap*top"`
-- **Phrase**: `"q" => "\"exact phrase\""`
-
-Use `filter_by` for field filters and numeric comparisons, for example:
-- `"filter_by" => "price:>100&&category:electronics"`
-- `"filter_by" => "category:food||category:nature"`
-
-#### Other Parameters
-- `query_by` - Fields to search in (comma-separated string)
-- `filter_by` - Filter conditions (string)
-- `sort_by` - Sort fields (string)
-- `limit` - Number of results (string)
-- `offset` - Starting offset (string)
-
-## Response Handling
-
-All API methods return a `Result<Response>`:
-
-```rust
-let response = client.health().await?;
-
-// Check success
-if response.is_success() {
-    let body = response.get_body();
-    // Process response...
-}
-
-// Check status code
-let status_code = response.get_status_code();
-
-// Get error message
-if response.is_error() {
-    if let Some(error) = response.get_error() {
-        println!("Error: {}", error);
-    }
-}
-```
-
-## Error Handling
-
-The client uses Rust's `Result` type for error handling:
-
-```rust
-use hlquery_rust_client::{Client, HlqueryError};
-
-match client.search("collection", params).await {
-    Ok(response) => {
-        // Handle success
-    }
-    Err(HlqueryError::RequestError(e)) => {
-        println!("Request failed: {}", e);
-    }
-    Err(HlqueryError::ValidationError(msg)) => {
-        println!("Validation failed: {}", msg);
-    }
-    Err(HlqueryError::AuthenticationError(msg)) => {
-        println!("Auth failed: {}", msg);
-    }
-    Err(e) => {
-        println!("Error: {}", e);
-    }
-}
-```
-
-## Examples
-
-### Run Examples
-
-```bash
-# Comprehensive example
-cargo run --example example
-
-# Basic usage
-cargo run --example basic_usage
-
-# Collections examples
-cargo run --example collections
-
-# Documents examples
-cargo run --example documents
-
-# Search examples
-cargo run --example search
-
-# SAM examples
-cargo run --example sam
-
-# SQL examples
-cargo run --example sql
-```
-
-### With Authentication Token
-
-```bash
-cargo run --example example your_token_here
-```
-
-## Requirements
-
-- Rust 1.70+ (Edition 2021)
-- Tokio runtime (for async support)
-
-## Dependencies
-
-- `reqwest`: HTTP client
-- `serde` / `serde_json`: JSON serialization
-- `url`: URL parsing
-- `thiserror`: Error handling
-- `md5`: Token generation
-- `urlencoding`: URL encoding
-- `tokio`: Async runtime
-
-## Architecture
-
-The client follows a modular architecture:
-
-- **Client**: Main entry point, coordinates all operations
-- **Request**: Handles HTTP requests and authentication
-- **Response**: Wraps HTTP responses with helper methods
-- **Collections**: Collection management operations
-- **Documents**: Document CRUD operations
-- **Search**: Search operations
-- **Utils**: Configuration, validation, and authentication utilities
-
-## Support
-
-- **API Documentation**: See main [hlquery docs](../../../docs/)
-- **Examples**: Check the `examples/` directory
-- **Issues**: Report issues in the main hlquery repository
-
-## Contributing
-
-Contributions are welcome! The client follows Rust best practices:
-
-- Use `async/await` for all I/O operations
-- Return `Result<T>` for error handling
-- Use `serde` for JSON serialization
-- Follow Rust naming conventions (snake_case)
-
----
-
-**Happy coding! 🚀**
+- The client is async-first and expects a Tokio runtime.
+- See `src/` and the examples in this repository for additional endpoint coverage.
