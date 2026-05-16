@@ -16,7 +16,7 @@
 
 ### What is the hlquery Rust API?
 
-The hlquery Rust API is the official Rust client for hlquery. It wraps the server's HTTP interface in an async client with helpers for collections, documents, search, SQL, and SAM.
+The hlquery Rust API is the official Rust client for [hlquery](https://github.com/hlquery/hlquery). It wraps the server's HTTP interface in an async client with helpers for collections, documents, search, SQL, and SAM.
 
 It is intended for async services, tools, and applications that want strong typing and a small high-level integration layer over hlquery.
 
