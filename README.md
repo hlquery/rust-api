@@ -7,8 +7,7 @@
 **A modern async Rust client library for hlquery, designed with a familiar and intuitive API structure.**
 
 [![Follow hlquery](https://img.shields.io/badge/Follow-%40hlquery-blue?logo=x&logoColor=white)](https://x.com/hlquery)
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/hlquery/rust-api)](https://github.com/hlquery/rust-api/pulse)
-[![GitHub](https://img.shields.io/badge/GitHub-rust--api-181717?logo=github&logoColor=white)](https://github.com/hlquery/rust-api/stargazers)
+[![GitHub](https://img.shields.io/badge/GitHub-rust--api-purple?logo=github&logoColor=white)](https://github.com/hlquery/rust-api/stargazers)
 [![hlquery](https://img.shields.io/badge/GitHub-hlquery-blue?logo=github&logoColor=white)](https://github.com/hlquery/hlquery/stargazers)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
