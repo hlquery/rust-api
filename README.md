@@ -16,7 +16,7 @@
 
 ### What is the hlquery Rust API?
 
-The hlquery Rust API is the official Rust client for [hlquery](https://github.com/hlquery/hlquery). It wraps the server's HTTP interface in an async client with helpers for collections, documents, search, SQL, and SAM.
+The hlquery Rust API is the official Rust client for [hlquery](https://github.com/hlquery/hlquery). It wraps the server's HTTP interface in an async client with helpers for collections, documents, search, and SQL.
 
 It is intended for async services, tools, and applications that want strong typing and a small high-level integration layer over hlquery.
 
@@ -24,7 +24,7 @@ It is intended for async services, tools, and applications that want strong typi
 
 - Async-first design built for Tokio.
 - Strong typing and structured error handling.
-- Modular API objects for collections, search, SQL, and SAM.
+- Modular API objects for collections, search, and SQL.
 - Raw request helper for custom routes.
 
 ### Why choose it over raw HTTP?
@@ -84,25 +84,6 @@ options.insert("auth_method".to_string(), "bearer".to_string());
 
 let client = Client::new("http://localhost:9200", Some(options))?;
 client.set_auth_token("your_api_key_here".to_string(), "api-key".to_string());
-```
-
-### SAM
-
-SAM is separate from vector search. It performs term and intent-style lookup, not vector similarity search.
-
-```rust
-use hlquery_rust_client::Client;
-use std::collections::HashMap;
-
-let client = Client::new("http://localhost:9200", None)?;
-let sam = client.sam();
-
-let status = sam.status(Some("music"), None).await?;
-let history = sam.history(Some("music"), 5, None).await?;
-
-let mut params = HashMap::new();
-params.insert("limit".to_string(), "5".to_string());
-let results = sam.search("music", "queen of pop", Some(params)).await?;
 ```
 
 ### SQL

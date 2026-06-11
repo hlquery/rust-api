@@ -41,9 +41,5 @@ name = "search"
 path = "examples/search.rs"
 
 [[example]]
-name = "sam"
-path = "examples/sam.rs"
-
-[[example]]
 name = "sql"
 path = "examples/sql.rs"

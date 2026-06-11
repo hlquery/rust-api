@@ -10,7 +10,6 @@ use crate::documents::Documents;
 use crate::error::{HlqueryError, Result};
 use crate::request::Request;
 use crate::response::Response;
-use crate::sam::Sam;
 use crate::search::Search;
 use crate::sql::Sql;
 use crate::utils::config::Config;
@@ -25,7 +24,6 @@ pub struct Client {
     documents: Arc<Documents>,
     search: Arc<Search>,
     sql: Arc<Sql>,
-    sam: Arc<Sam>,
 }
 
 impl Client {
@@ -55,7 +53,6 @@ impl Client {
         let documents = Arc::new(Documents::new(Arc::clone(&request)));
         let search = Arc::new(Search::new(Arc::clone(&request)));
         let sql = Arc::new(Sql::new(Arc::clone(&request), Arc::clone(&search)));
-        let sam = Arc::new(Sam::new(Arc::clone(&request)));
 
         Ok(Client {
             request,
@@ -63,7 +60,6 @@ impl Client {
             documents,
             search,
             sql,
-            sam,
         })
     }
 
@@ -223,11 +219,6 @@ impl Client {
         Arc::clone(&self.sql)
     }
 
-    /// Get SAM API handler
-    pub fn sam(&self) -> Arc<Sam> {
-        Arc::clone(&self.sam)
-    }
-
     /// Perform search
     pub async fn search(
         &self,
@@ -254,35 +245,6 @@ impl Client {
         params: Option<HashMap<String, String>>,
     ) -> Result<Response> {
         self.search.sql(collection_name, sql, params).await
-    }
-
-    /// Execute a SAM search
-    pub async fn sam_search(
-        &self,
-        collection_name: &str,
-        query: &str,
-        params: Option<HashMap<String, String>>,
-    ) -> Result<Response> {
-        self.sam.search(collection_name, query, params).await
-    }
-
-    /// Get SAM status
-    pub async fn sam_status(
-        &self,
-        collection_name: Option<&str>,
-        params: Option<HashMap<String, String>>,
-    ) -> Result<Response> {
-        self.sam.status(collection_name, params).await
-    }
-
-    /// Get SAM history
-    pub async fn sam_history(
-        &self,
-        collection_name: Option<&str>,
-        limit: usize,
-        params: Option<HashMap<String, String>>,
-    ) -> Result<Response> {
-        self.sam.history(collection_name, limit, params).await
     }
 
     /// Execute arbitrary request
