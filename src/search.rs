@@ -61,10 +61,42 @@ impl Search {
 
     /// Perform multi-search
     pub async fn multi_search(&self, searches: Vec<Value>) -> Result<Response> {
+        self.multi_search_with_method(searches, "POST").await
+    }
+
+    pub async fn multi_search_with_method(
+        &self,
+        searches: Vec<Value>,
+        method: &str,
+    ) -> Result<Response> {
         let body = serde_json::json!({ "searches": searches });
         self.request
-            .execute("POST", "/multi_search", Some(body), None)
+            .execute(method, "/multi_search", Some(body), None)
             .await
+    }
+
+    pub async fn global_search(
+        &self,
+        method: &str,
+        body: Option<Value>,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.request.execute(method, "/search", body, params).await
+    }
+
+    pub async fn search_with_method(
+        &self,
+        collection_name: &str,
+        method: &str,
+        body: Option<Value>,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        Validator::validate_collection_name(collection_name)?;
+        let path = format!(
+            "/collections/{}/search",
+            urlencoding::encode(collection_name)
+        );
+        self.request.execute(method, &path, body, params).await
     }
 
     /// Execute a collection-bound SQL SELECT through the search endpoint

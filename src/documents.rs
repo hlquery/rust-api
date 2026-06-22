@@ -52,6 +52,22 @@ impl Documents {
         self.request.execute("GET", &path, None, None).await
     }
 
+    pub async fn context(
+        &self,
+        collection_name: &str,
+        document_id: &str,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        Validator::validate_collection_name(collection_name)?;
+        Validator::validate_document_id(document_id)?;
+        let path = format!(
+            "/collections/{}/documents/{}/context",
+            urlencoding::encode(collection_name),
+            urlencoding::encode(document_id)
+        );
+        self.request.execute("GET", &path, None, params).await
+    }
+
     /// Add document
     pub async fn add(&self, collection_name: &str, document: Value) -> Result<Response> {
         Validator::validate_collection_name(collection_name)?;
@@ -123,5 +139,63 @@ impl Documents {
         self.request
             .execute("DELETE", &path, None, Some(query_params))
             .await
+    }
+
+    pub async fn update_by_query(&self, collection_name: &str, body: Value) -> Result<Response> {
+        let path = format!(
+            "/collections/{}/documents/_update_by_query",
+            urlencoding::encode(collection_name)
+        );
+        self.request.execute("POST", &path, Some(body), None).await
+    }
+    pub async fn delete_by_query(&self, collection_name: &str, body: Value) -> Result<Response> {
+        let path = format!(
+            "/collections/{}/documents/_delete_by_query",
+            urlencoding::encode(collection_name)
+        );
+        self.request.execute("POST", &path, Some(body), None).await
+    }
+    async fn dual_route(
+        &self,
+        collection_name: &str,
+        suffix: &str,
+        method: &str,
+        body: Option<Value>,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        Validator::validate_collection_name(collection_name)?;
+        let path = format!(
+            "/collections/{}/documents/{}",
+            urlencoding::encode(collection_name),
+            suffix
+        );
+        self.request.execute(method, &path, body, params).await
+    }
+    pub async fn facet_counts(
+        &self,
+        c: &str,
+        m: &str,
+        b: Option<Value>,
+        q: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.dual_route(c, "facet_counts", m, b, q).await
+    }
+    pub async fn export(
+        &self,
+        c: &str,
+        m: &str,
+        b: Option<Value>,
+        q: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.dual_route(c, "export", m, b, q).await
+    }
+    pub async fn maybe(
+        &self,
+        c: &str,
+        m: &str,
+        b: Option<Value>,
+        q: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.dual_route(c, "maybe", m, b, q).await
     }
 }

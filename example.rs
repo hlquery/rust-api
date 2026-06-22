@@ -171,7 +171,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let client = Client::new(
-        base_url,
+        &base_url,
         if options.is_empty() {
             None
         } else {
@@ -300,7 +300,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut doc_params = HashMap::new();
         doc_params.insert("offset".to_string(), offset.to_string());
         doc_params.insert("limit".to_string(), limit.to_string());
-        let collections = client.list_collections(offset, limit).await?;
+        let collections = client
+            .list_collections(offset as usize, limit as usize)
+            .await?;
 
         if command == "cols" {
             // Simple list display for cols command

@@ -179,11 +179,41 @@ impl Request {
             .join(path)
             .map_err(|_| HlqueryError::InvalidUrl(format!("{}{}", self.base_url, path)))?;
 
+        if url.origin() != base.origin() {
+            return Err(HlqueryError::InvalidUrl(
+                "Request URL must use the configured server origin".to_string(),
+            ));
+        }
+
         Ok(url.to_string())
     }
 
     #[cfg(test)]
     pub(crate) fn base_url(&self) -> &str {
         &self.base_url
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Request;
+
+    #[test]
+    fn rejects_cross_origin_request_paths() {
+        let request = Request::new(
+            "https://search.example.test".to_string(),
+            1000,
+            Some("secret".to_string()),
+            "bearer".to_string(),
+        )
+        .expect("request client");
+
+        assert!(request
+            .build_url("https://attacker.example.test/collect")
+            .is_err());
+        assert!(request
+            .build_url("//attacker.example.test/collect")
+            .is_err());
+        assert!(request.build_url("/health").is_ok());
     }
 }

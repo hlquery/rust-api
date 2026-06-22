@@ -9,6 +9,7 @@ use crate::collections::Collections;
 use crate::documents::Documents;
 use crate::error::{HlqueryError, Result};
 use crate::request::Request;
+use crate::resources::{Aliases, Analytics, Keys, Modules, Overrides, Stopwords, Synonyms, Users};
 use crate::response::Response;
 use crate::search::Search;
 use crate::sql::Sql;
@@ -24,6 +25,14 @@ pub struct Client {
     documents: Arc<Documents>,
     search: Arc<Search>,
     sql: Arc<Sql>,
+    synonyms: Arc<Synonyms>,
+    stopwords: Arc<Stopwords>,
+    overrides: Arc<Overrides>,
+    aliases: Arc<Aliases>,
+    users: Arc<Users>,
+    keys: Arc<Keys>,
+    modules: Arc<Modules>,
+    analytics: Arc<Analytics>,
 }
 
 impl Client {
@@ -53,6 +62,14 @@ impl Client {
         let documents = Arc::new(Documents::new(Arc::clone(&request)));
         let search = Arc::new(Search::new(Arc::clone(&request)));
         let sql = Arc::new(Sql::new(Arc::clone(&request), Arc::clone(&search)));
+        let synonyms = Arc::new(Synonyms::new(Arc::clone(&request)));
+        let stopwords = Arc::new(Stopwords::new(Arc::clone(&request)));
+        let overrides = Arc::new(Overrides::new(Arc::clone(&request)));
+        let aliases = Arc::new(Aliases::new(Arc::clone(&request)));
+        let users = Arc::new(Users::new(Arc::clone(&request)));
+        let keys = Arc::new(Keys::new(Arc::clone(&request)));
+        let modules = Arc::new(Modules::new(Arc::clone(&request)));
+        let analytics = Arc::new(Analytics::new(Arc::clone(&request)));
 
         Ok(Client {
             request,
@@ -60,6 +77,14 @@ impl Client {
             documents,
             search,
             sql,
+            synonyms,
+            stopwords,
+            overrides,
+            aliases,
+            users,
+            keys,
+            modules,
+            analytics,
         })
     }
 
@@ -94,6 +119,96 @@ impl Client {
     /// Get server information
     pub async fn info(&self) -> Result<Response> {
         self.request.execute("GET", "/", None, None).await
+    }
+
+    pub async fn status(&self) -> Result<Response> {
+        self.request.execute("GET", "/status", None, None).await
+    }
+    pub async fn query_status(&self) -> Result<Response> {
+        self.request.execute("GET", "/query", None, None).await
+    }
+    pub async fn ready(&self) -> Result<Response> {
+        self.request.execute("GET", "/ready", None, None).await
+    }
+    pub async fn ping(&self) -> Result<Response> {
+        self.request.execute("GET", "/ping", None, None).await
+    }
+    pub async fn metrics(&self) -> Result<Response> {
+        self.request.execute("GET", "/metrics", None, None).await
+    }
+    pub async fn metrics_json(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/metrics.json", None, None)
+            .await
+    }
+    pub async fn metrics_history(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/metrics/history", None, None)
+            .await
+    }
+    pub async fn connections(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/connections", None, None)
+            .await
+    }
+    pub async fn rocksdb(&self) -> Result<Response> {
+        self.request.execute("GET", "/rocksdb", None, None).await
+    }
+    pub async fn rocksdb_internal(&self) -> Result<Response> {
+        self.request.execute("GET", "/_rocksdb", None, None).await
+    }
+    pub async fn doc_total(&self) -> Result<Response> {
+        self.request.execute("GET", "/doctotal", None, None).await
+    }
+    pub async fn search_config(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/search-config", None, None)
+            .await
+    }
+    pub async fn startup(&self) -> Result<Response> {
+        self.request.execute("GET", "/startup", None, None).await
+    }
+    pub async fn boot_status(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/boot-status", None, None)
+            .await
+    }
+    pub async fn integrity(&self) -> Result<Response> {
+        self.request.execute("GET", "/integrity", None, None).await
+    }
+    pub async fn consistency(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/consistency", None, None)
+            .await
+    }
+    pub async fn self_check(&self) -> Result<Response> {
+        self.request.execute("GET", "/self-check", None, None).await
+    }
+    pub async fn storage_status(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/admin/storage_status", None, None)
+            .await
+    }
+    pub async fn debug_counters(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/debug/counters", None, None)
+            .await
+    }
+    pub async fn update_counters(
+        &self,
+        method: &str,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.request
+            .execute(method, "/update-counters", None, params)
+            .await
+    }
+    pub async fn repair(
+        &self,
+        method: &str,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.request.execute(method, "/repair", None, params).await
     }
 
     /// Flush all data to disk
@@ -186,6 +301,10 @@ impl Client {
         self.collections.get_fields(name).await
     }
 
+    pub async fn get_collection_language(&self, name: &str) -> Result<Response> {
+        self.collections.language(name).await
+    }
+
     // Documents API
 
     /// Get documents API handler
@@ -217,6 +336,31 @@ impl Client {
     /// Get SQL API handler
     pub fn sql_api(&self) -> Arc<Sql> {
         Arc::clone(&self.sql)
+    }
+
+    pub fn synonyms(&self) -> Arc<Synonyms> {
+        Arc::clone(&self.synonyms)
+    }
+    pub fn stopwords(&self) -> Arc<Stopwords> {
+        Arc::clone(&self.stopwords)
+    }
+    pub fn overrides(&self) -> Arc<Overrides> {
+        Arc::clone(&self.overrides)
+    }
+    pub fn aliases(&self) -> Arc<Aliases> {
+        Arc::clone(&self.aliases)
+    }
+    pub fn users(&self) -> Arc<Users> {
+        Arc::clone(&self.users)
+    }
+    pub fn keys(&self) -> Arc<Keys> {
+        Arc::clone(&self.keys)
+    }
+    pub fn modules(&self) -> Arc<Modules> {
+        Arc::clone(&self.modules)
+    }
+    pub fn analytics(&self) -> Arc<Analytics> {
+        Arc::clone(&self.analytics)
     }
 
     /// Perform search

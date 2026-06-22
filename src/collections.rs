@@ -46,9 +46,13 @@ impl Collections {
 
     /// Get collection fields (formatted)
     pub async fn get_fields(&self, name: &str) -> Result<Response> {
-        Validator::validate_collection_name(name)?;
+        self.get(name).await
+    }
 
-        let path = format!("/collections/{}/fields", urlencoding::encode(name));
+    /// Get detected collection language information
+    pub async fn language(&self, name: &str) -> Result<Response> {
+        Validator::validate_collection_name(name)?;
+        let path = format!("/collections/{}/lang", urlencoding::encode(name));
         self.request.execute("GET", &path, None, None).await
     }
 
