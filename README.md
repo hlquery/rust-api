@@ -107,3 +107,25 @@ let sql_api = client.sql_api();
 let same_rows = sql_api.query("SHOW COLLECTIONS;", None).await?;
 ```
 
+### Contributing
+
+We welcome contributions from the community! All contributions must be released under the BSD 3-Clause license.
+
+### How to Contribute
+
+- Check existing [Rust API issues](https://github.com/hlquery/rust-api/issues) or create new ones
+- Contribute Rust client changes to [hlquery/rust-api](https://github.com/hlquery/rust-api)
+- Contribute shared server/API changes to [hlquery/hlquery](https://github.com/hlquery/hlquery)
+- Test and report bugs against the Rust client
+- Improve Rust-specific documentation and examples
+
+### Community
+
+- [Documentation](https://docs.hlquery.com)
+- [X (Twitter)](https://x.com/hlquery)
+- [Rust API GitHub](https://github.com/hlquery/rust-api)
+- [hlquery GitHub](https://github.com/hlquery/hlquery)
+
+### License
+
+The hlquery Rust API is licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
