@@ -23,7 +23,9 @@ pub use collections::Collections;
 pub use documents::Documents;
 pub use error::{HlqueryError, Result};
 pub use request::Request;
-pub use resources::{Aliases, Analytics, Keys, Modules, Overrides, Stopwords, Synonyms, Users};
+pub use resources::{
+    Aliases, Analytics, Keys, Modules, Overrides, Presets, Stopwords, Synonyms, Users,
+};
 pub use response::Response;
 pub use search::Search;
 pub use sql::Sql;

@@ -9,7 +9,9 @@ use crate::collections::Collections;
 use crate::documents::Documents;
 use crate::error::{HlqueryError, Result};
 use crate::request::Request;
-use crate::resources::{Aliases, Analytics, Keys, Modules, Overrides, Stopwords, Synonyms, Users};
+use crate::resources::{
+    Aliases, Analytics, Keys, Modules, Overrides, Presets, Stopwords, Synonyms, Users,
+};
 use crate::response::Response;
 use crate::search::Search;
 use crate::sql::Sql;
@@ -33,6 +35,7 @@ pub struct Client {
     keys: Arc<Keys>,
     modules: Arc<Modules>,
     analytics: Arc<Analytics>,
+    presets: Arc<Presets>,
 }
 
 impl Client {
@@ -70,6 +73,7 @@ impl Client {
         let keys = Arc::new(Keys::new(Arc::clone(&request)));
         let modules = Arc::new(Modules::new(Arc::clone(&request)));
         let analytics = Arc::new(Analytics::new(Arc::clone(&request)));
+        let presets = Arc::new(Presets::new(Arc::clone(&request)));
 
         Ok(Client {
             request,
@@ -85,6 +89,7 @@ impl Client {
             keys,
             modules,
             analytics,
+            presets,
         })
     }
 
@@ -163,6 +168,11 @@ impl Client {
     pub async fn search_config(&self) -> Result<Response> {
         self.request
             .execute("GET", "/search-config", None, None)
+            .await
+    }
+    pub async fn config_files(&self) -> Result<Response> {
+        self.request
+            .execute("GET", "/config-files", None, None)
             .await
     }
     pub async fn startup(&self) -> Result<Response> {
@@ -361,6 +371,9 @@ impl Client {
     }
     pub fn analytics(&self) -> Arc<Analytics> {
         Arc::clone(&self.analytics)
+    }
+    pub fn presets(&self) -> Arc<Presets> {
+        Arc::clone(&self.presets)
     }
 
     /// Perform search

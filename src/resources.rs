@@ -287,6 +287,29 @@ macro_rules! crud {
 crud!(Users, "/users");
 crud!(Keys, "/keys");
 
+service!(Presets);
+impl Presets {
+    pub async fn list(&self, q: Option<HashMap<String, String>>) -> Result<Response> {
+        self.request.execute("GET", "/presets", None, q).await
+    }
+    pub async fn get(&self, name: &str) -> Result<Response> {
+        self.request
+            .execute("GET", &format!("/presets/{}", enc(name)), None, None)
+            .await
+    }
+    pub async fn upsert(&self, name: &str, body: Value, verb: &str) -> Result<Response> {
+        let verb = method(verb, &["POST", "PUT"])?;
+        self.request
+            .execute(&verb, &format!("/presets/{}", enc(name)), Some(body), None)
+            .await
+    }
+    pub async fn delete(&self, name: &str) -> Result<Response> {
+        self.request
+            .execute("DELETE", &format!("/presets/{}", enc(name)), None, None)
+            .await
+    }
+}
+
 service!(Modules);
 impl Modules {
     pub async fn list(&self) -> Result<Response> {
