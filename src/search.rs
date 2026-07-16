@@ -84,6 +84,16 @@ impl Search {
         self.request.execute(method, "/search", body, params).await
     }
 
+    /// Alias for global_search: search a merged result set across collections.
+    pub async fn search_all(
+        &self,
+        method: &str,
+        body: Option<Value>,
+        params: Option<HashMap<String, String>>,
+    ) -> Result<Response> {
+        self.global_search(method, body, params).await
+    }
+
     pub async fn search_with_method(
         &self,
         collection_name: &str,

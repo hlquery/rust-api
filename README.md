@@ -119,6 +119,14 @@ We welcome contributions from the community! All contributions must be released 
 - Test and report bugs against the Rust client
 - Improve Rust-specific documentation and examples
 
+### Search all collections
+
+```rust
+let result = client.search_api().search_all("GET", None, Some(params)).await?;
+```
+
+Use `POST` with a JSON body to pass a collection array. `global_search` remains available as an equivalent name. Results are globally merged and each hit includes `document._collection`.
+
 ### Community
 
 - 📖 [Documentation](https://docs.hlquery.com)
