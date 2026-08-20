@@ -37,7 +37,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-hlquery-rust-client = { path = "../etc/api/rust" }
+hlquery-rust-client = { path = "./rust" }
 tokio = { version = "1", features = ["full"] }
 ```
 
